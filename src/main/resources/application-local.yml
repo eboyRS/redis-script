@@ -1,0 +1,34 @@
+spring:
+  application:
+    group: DEV
+  activemq:
+    broker-url: tcp://192.168.10.202:62617
+    user: admin
+    password: admin
+  redis:
+    host: 192.168.10.202
+    port: 6279
+    password:
+    timeout: 5000
+    pool:
+      min-idle: 10
+      max-idle: 10
+      max-active: 10
+      max-wait: 5000
+    database: 8
+mq:
+  topic:
+    entrust_state: ${spring.application.group}_ENTRUST_STATE_XFW
+    user_action: ${spring.application.group}_USER_ACTION_XFW
+    admin_action: ${spring.application.group}_ADMIN_ACTION_XFW
+    validate: ${spring.application.group}_VALIDATE_XFW
+    score: ${spring.application.group}_SCORE_XFW
+    entrust_margin: ${spring.application.group}_ENTRUST_MARGIN
+    order-create: ${spring.application.group}_EXTERNAL_ORDER_CREATE
+    order-cancel: ${spring.application.group}_EXTERNAL_ORDER_CANCEL
+    order-callback: ${spring.application.group}_EXTERNAL_ORDER_CALLBACK
+    cancel-callback: ${spring.application.group}_EXTERNAL_ORDER_CANCEL_CALLBACK
+    order-notify: ${spring.application.group}_EXTERNAL_ORDER_NOTIFY
+
+zookeeper:
+  address: zookeeper://192.168.10.202:2281

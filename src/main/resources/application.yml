@@ -1,0 +1,20 @@
+server:
+  port: 8003
+
+spring:
+  application:
+    name: redis-script
+  profiles:
+    active: local
+  activemq:
+    in-memory: false
+    pool:
+      enabled: true
+      expiry-timeout: 10000
+      idle-timeout: 30000
+      max-connections: 20
+  jms:
+    pub-sub-domain: false
+    listener:
+      acknowledge-mode: CLIENT
+
