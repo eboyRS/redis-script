@@ -2,7 +2,7 @@ local res = '';
 local code = KEYS[1];
 --用户订单id
 local id = ARGV[1];
---用户买单数量
+--用户卖单数量
 local num = ARGV[2];
 local priority = ARGV[3];
 
@@ -63,64 +63,57 @@ local function getIndex(_start, _end)
 end
 
 --依次排列 从左到右 优先级 由高到底 时间由先到后
-local function insertMarketBuy()
+local function insertMarketSell()
     local startIndex = 0;
-    --获取买单队列长度
-    local len = redis.call('LLEN', code .. '_market_buy');
+    --获取卖单队列长度
+    local len = redis.call('LLEN', code .. '_market_sell');
     local endIndex = len - 1
     if (len == 0) then
-        redis.call('LPUSH', code .. '_market_buy', id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
+        redis.call('LPUSH', code .. '_market_sell', id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
     else
         --使用二分查找，确定卖单位置
         local index = getIndex(startIndex, endIndex)
         if (index >= len) then
             --超出当前最大位置，直接插入到队尾
-            redis.call('RPUSH', code .. '_market_buy', id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
+            redis.call('RPUSH', code .. '_market_sell', id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
         else
             --位置在范围内，直接插入到制定位置
             local aa = redis.call('LINDEX', code .. '_sell', index);
-            redis.call('LINSERT', code .. '_market_buy', 'BEFORE', aa, id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
+            redis.call('LINSERT', code .. '_market_sell', 'BEFORE', aa, id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
         end
     end
 end
 
 local function dealPerMatch(_id, _price, _num, _priority)
-    if (tonumber(num) < _num * _price) then
-        --当限价卖单交易额大于市价买单额度
-        local volume = math.floor(num / _price)
-        if (volume == 0) then
-            --当前额度已不满足交易精度，中止交易，并退回限价卖单
-            redis.call('RPUSH', code .. '_sell', _id .. ',' .. _price .. ',' .. string.format("%.0f", _num) .. ',' .. _priority);
-        else
-            --当前额度满足交易精度，扣减交易量，并将剩余量退回限价卖队列
-            redis.call('RPUSH', code .. '_sell', _id .. ',' .. _price .. ',' .. string.format("%.0f", _num - volume) .. ',' .. _priority);
-            res = res .. ',' .. _id .. ',' .. _price .. ',' .. string.format("%.0f", volume);
-            lasthasleft = 1;
-        end
+    if (tonumber(num) < _num ) then
+        --当限价买单交易额大于市价卖单额度
+        redis.call('LPUSH', code .. '_buy', _id .. ',' .. _price .. ',' .. string.format("%.0f", _num - num) .. ',' .. _priority);
+        res = res .. ',' .. _id .. ',' .. _price .. ',' .. string.format("%.0f", num);
+        lasthasleft = 1;
         num = 0;
     else
-        --当限价卖单交易额小于市价买单额度 直接成交
+        --当限价买单交易额小于市价卖单额度 直接成交
         res = res .. ',' .. _id .. ',' .. _price .. ',' .. string.format("%.0f", _num);
-        num = num - _num * _price;
+        num = num - _num ;
     end
 end;
 
-local function matchMarketBuy()
+local function matchMarketSell()
     while true do
-        --获取市价卖单
-        local limitSellNode = redis.call('RPOP', code .. '_sell');
-        if (limitSellNode == false) then
-            --如果限价卖单不存在，存入市价买单数据库
-            insertMarketBuy();
+        --获取市价买单
+        local limitBuyNode = redis.call('LPOP', code .. '_buy');
+        if (limitBuyNode == false) then
+            --如果限价买单不存在，存入市价卖单数据库
+            insertMarketSell();
             break ;
         end ;
 
-        local limitSellContent = split(limitSellNode, ',');
-        local _id = limitSellContent[1];
-        local _price = limitSellContent[2];
-        local _num = limitSellContent[3];
-        local _priority = limitSellContent[4];
-        limitSellContent = nil;
+        local limitBuyContent = split(limitBuyNode, ',');
+        local _id = limitBuyContent[1];
+        local _price = limitBuyContent[2];
+        local _num = limitBuyContent[3];
+        local _priority = limitBuyContent[4];
+        limitBuyContent = nil;
 
         dealPerMatch(_id, _price, _num, _priority)
 
@@ -130,6 +123,6 @@ local function matchMarketBuy()
     end ;
 end;
 
-matchMarketBuy();
+matchMarketSell();
 res = res .. ',' .. lasthasleft;
 return res;
