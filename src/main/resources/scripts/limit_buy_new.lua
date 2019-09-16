@@ -27,11 +27,11 @@ end
 local function getIndex(_start,_end)
     local maxIndex = _end;
     local content = getContent(_start);
-    if(tonumber(price)>tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority)< content[4]))then
+    if(tonumber(price)>tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority)< tonumber(content[4])))then
         return _start;
     end
     local endContent = getContent(_end);
-    if(tonumber(price)<tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority) >= content[4]))then
+    if(tonumber(price)<tonumber(endContent[2]) or (tonumber(price)==tonumber(endContent[2]) and tonumber(priority) >= tonumber(endContent[4])))then
         return _end+1;
     end
 
@@ -76,7 +76,7 @@ local function insertBuyList()
             redis.call('RPUSH', code .. '_buy', id .. ',' .. price .. ',' .. string.format("%.0f", num) ..',' .. priority);
         else
             --位置在范围内，直接插入到制定位置
-            local aa = redis.call('LINDEX', code .. '_sell', index);
+            local aa = redis.call('LINDEX', code .. '_buy', index);
             redis.call('LINSERT', code .. '_buy', 'BEFORE', aa, id .. ',' .. price .. ',' .. string.format("%.0f", num)..',' .. priority);
         end
     end
@@ -115,7 +115,7 @@ local function matchMarketSell()
         local _num = marketSellContent[2];
         local _priority= marketSellContent[3];
         marketSellContent = nil;
-        if(tonumber(_num)<=num)then
+        if(tonumber(_num)<=tonumber(num))then
             --如果市价买单购买量小于当前限价卖单，则把买单全部吃掉，但是由于存在极小值问题，市价买单会存在一定精度外额度未成交
 
             res = res .. ',' .. _id ..',' .. price .. ',' ..  string.format("%.0f", _num);

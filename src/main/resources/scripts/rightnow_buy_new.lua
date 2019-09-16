@@ -33,7 +33,7 @@ local function getIndex(_start, _end)
         return _start;
     end
     local endContent = getContent(_end);
-    if (tonumber(priority) >= tonumber(content[3])) then
+    if (tonumber(priority) >= tonumber(endContent[3])) then
         return _end + 1;
     end
 
@@ -78,7 +78,7 @@ local function insertMarketBuy()
             redis.call('RPUSH', code .. '_market_buy', id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
         else
             --位置在范围内，直接插入到制定位置
-            local aa = redis.call('LINDEX', code .. '_sell', index);
+            local aa = redis.call('LINDEX', code .. '_market_buy', index);
             redis.call('LINSERT', code .. '_market_buy', 'BEFORE', aa, id .. ',' .. string.format("%.0f", num) .. ',' .. priority);
         end
     end

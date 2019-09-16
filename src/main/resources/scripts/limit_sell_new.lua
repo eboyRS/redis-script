@@ -26,11 +26,11 @@ end
 
 local function getIndex(_start,_end)
     local content = getContent(_start);
-    if(tonumber(price)>tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority)>=content[4]))then
+    if(tonumber(price)>tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority)>=tonumber(content[4])))then
         return _start;
     end
     local endContent = getContent(_end);
-    if(tonumber(price)<tonumber(content[2]) or (tonumber(price)==tonumber(content[2]) and tonumber(priority)<content[4]))then
+    if(tonumber(price)<tonumber(endContent[2]) or (tonumber(price)==tonumber(endContent[2]) and tonumber(priority)<tonumber(endContent[4])))then
         return _end+1;
     end
 
@@ -126,6 +126,10 @@ local function matchMarketBuy()
             res = res .. ',' .. _id .. ',' .. price .. ',' .. string.format("%.0f", num);
             num = 0;
             lasthasleft = 1;
+        end
+
+        if (tonumber(num)<=0) then
+            break;
         end
     end;
 end;
